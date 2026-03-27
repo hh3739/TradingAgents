@@ -13,6 +13,7 @@ from tradingagents.llm_clients import create_llm_client
 from tradingagents.agents import *
 from tradingagents.default_config import DEFAULT_CONFIG
 from tradingagents.agents.utils.memory import FinancialSituationMemory
+from tradingagents.agents.utils.industry_memory import IndustryThesisMemory
 from tradingagents.agents.utils.agent_states import (
     AgentState,
     InvestDebateState,
@@ -30,7 +31,11 @@ from tradingagents.agents.utils.agent_utils import (
     get_income_statement,
     get_news,
     get_insider_transactions,
-    get_global_news
+    get_global_news,
+    get_sector_overview,
+    get_sector_performance_vs_benchmark,
+    get_industry_peer_metrics,
+    get_industry_news,
 )
 
 from .conditional_logic import ConditionalLogic
@@ -100,6 +105,7 @@ class TradingAgentsGraph:
         self.trader_memory = FinancialSituationMemory("trader_memory", self.config)
         self.invest_judge_memory = FinancialSituationMemory("invest_judge_memory", self.config)
         self.risk_manager_memory = FinancialSituationMemory("risk_manager_memory", self.config)
+        self.industry_memory = IndustryThesisMemory(self.config)
 
         # Create tool nodes
         self.tool_nodes = self._create_tool_nodes()
@@ -119,6 +125,7 @@ class TradingAgentsGraph:
             self.invest_judge_memory,
             self.risk_manager_memory,
             self.conditional_logic,
+            self.industry_memory,
         )
 
         self.propagator = Propagator()
@@ -184,6 +191,15 @@ class TradingAgentsGraph:
                     get_income_statement,
                 ]
             ),
+            "industry": ToolNode(
+                [
+                    # Industry and sector analysis tools
+                    get_sector_overview,
+                    get_sector_performance_vs_benchmark,
+                    get_industry_peer_metrics,
+                    get_industry_news,
+                ]
+            ),
         }
 
     def propagate(self, company_name, trade_date):
@@ -230,6 +246,7 @@ class TradingAgentsGraph:
             "sentiment_report": final_state["sentiment_report"],
             "news_report": final_state["news_report"],
             "fundamentals_report": final_state["fundamentals_report"],
+            "industry_report": final_state.get("industry_report", ""),
             "investment_debate_state": {
                 "bull_history": final_state["investment_debate_state"]["bull_history"],
                 "bear_history": final_state["investment_debate_state"]["bear_history"],
