@@ -25,6 +25,7 @@ class GraphSetup:
         invest_judge_memory,
         risk_manager_memory,
         conditional_logic: ConditionalLogic,
+        industry_memory=None,
     ):
         """Initialize with required components."""
         self.quick_thinking_llm = quick_thinking_llm
@@ -36,6 +37,7 @@ class GraphSetup:
         self.invest_judge_memory = invest_judge_memory
         self.risk_manager_memory = risk_manager_memory
         self.conditional_logic = conditional_logic
+        self.industry_memory = industry_memory
 
     def setup_graph(
         self, selected_analysts=["market", "social", "news", "fundamentals"]
@@ -84,6 +86,13 @@ class GraphSetup:
             )
             delete_nodes["fundamentals"] = create_msg_delete()
             tool_nodes["fundamentals"] = self.tool_nodes["fundamentals"]
+
+        if "industry" in selected_analysts:
+            analyst_nodes["industry"] = create_industry_analyst(
+                self.quick_thinking_llm, self.industry_memory
+            )
+            delete_nodes["industry"] = create_msg_delete()
+            tool_nodes["industry"] = self.tool_nodes["industry"]
 
         # Create researcher and manager nodes
         bull_researcher_node = create_bull_researcher(
